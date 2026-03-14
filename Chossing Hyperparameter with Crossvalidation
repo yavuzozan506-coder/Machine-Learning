@@ -1,0 +1,14 @@
+import numpy as np
+from sklearn.linear_model import RidgeCV
+from sklearn.datasets import load_diabetes
+from sklearn.preprocessing import StandardScaler
+#Diyabet veri seti
+X,y = load_diabetes(return_X_y=True)
+X = StandardScaler().fit_transform(X)
+
+alphas = np.logspace(-3,3,20)
+## RidgeCV, çapraz doğrulamayı kendi içinde otomatik yaparak en iyi alpha'yı seçer
+ridge_cv = RidgeCV(alphas=alphas,cv=5,scoring='neg_mean_squared_error')
+ridge_cv.fit(X,y)
+print(f"En iyi Düzenlileştirme Katsayısı(Alpha):{ridge_cv.alpha_:.4f}")
+print(f"Model Katsayıları: {ridge_cv.coef_.round(2)}")
