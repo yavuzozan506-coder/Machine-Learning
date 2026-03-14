@@ -1,0 +1,17 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+epochs = 50
+plt.figure(figsize=(10,6))
+x = np.arange(epochs)
+plt.plot(x,100*np.exp(-0.1*x),label='Batch GD (Kararlı)', color='blue')
+
+
+plt.plot(x,100*np.exp(-0.2*x)+np.random.normal(0,1,epochs),label='Mini-Batch GD (Hızlı)',color='green')
+plt.plot(x,100*np.exp(-0.3*x)+np.random.normal(0,5,epochs),label = 'SGD (Çok Gürültülü)',
+color='red', alpha=0.5)
+plt.title("GD Varyantlarının Eğitim Sürecindeki Davranışı")
+plt.xlabel("Epoch (Eğitim Turu)")
+plt.ylabel("Hata (Maliyet)")
+plt.legend()
+plt.show()
