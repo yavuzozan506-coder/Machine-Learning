@@ -1,0 +1,41 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def f(x):
+     return x**2 + 4*x +1
+
+
+def df(x):
+    return 2*x+4
+
+def gradient_descent(starting_point,learning_rate,n_iterations,tolerance=1e-6):
+    x = starting_point
+    history = [x]
+    for i in range(n_iterations):
+        grad = df(x)
+        step = learning_rate * grad
+        if np.abs(step) < tolerance:
+            break
+        x = x - step
+        history.append(x)
+        print(f"Iterasyon: {i+1}: x = {x:.4f},f(x)={f(x):.4f}")
+    return x,history
+starting_point = 9.0
+learning_rates = [0.01,0.1,0.8]
+iters = 50
+
+plt.figure(figsize=(10,8))# En ve boy oranı
+for idx,lr in enumerate(learning_rates): #idx = kaçıncı sıradayız ? , lr: o anki öğrenme oranı
+    min_x , x_history = gradient_descent(starting_point,lr,iters) #dağcı yola çıkar ve x_historyi hazırlar
+    x_range = np.linspace(-10,10,100) # -10 ile 10 arası 100 nokta
+    plt.subplot(1,3,idx+1) #kağıdı 1 satır ve 3 sütuna böl
+    plt.plot(x_range,f(x_range),label = "f(x)",alpha=0.5) #aradaki o sabit mavi çukuru çiziyoruz ve alpha 0.5 ise rengi biraz daha şeffa yapar
+    plt.scatter(x_history,[f(h) for h in x_history],color='red',s=20) #dağcının ayak izlerini kırmızı renkte koyuyoruz. Hnagi x geçtiyse x in o anki değeri oluyor
+    plt.plot(x_history,[f(h) for h in x_history],color='red',alpha=0.3)  #Bu noktaları birbirine ince kırmızı çizgilerle bağlıyoruz.
+    plt.title(f"Öğrenme oranı:{lr}")
+    plt.xlabel("x")
+    plt.ylabel("maliyet")
+    plt.legend()
+plt.tight_layout() #Grafiklerin ve yazıların birbirine girmemesi için araları otomatik düzenliyor.
+plt.show()
+
