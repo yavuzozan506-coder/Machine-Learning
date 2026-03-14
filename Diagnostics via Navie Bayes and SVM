@@ -1,0 +1,39 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.datasets import load_digits
+from sklearn.model_selection import LearningCurveDisplay,ShuffleSplit
+
+
+#Standart el yazısı rakamlar veri seti
+X,y = load_digits(return_X_y=True)
+
+#Görselleştirme
+fig, ax = plt.subplots(nrows = 1,ncols=2,figsize=(16,6),sharey=True)
+
+#Çapraz doğrulama
+cv = ShuffleSplit(n_splits=50,test_size=0.2,random_state=0)
+
+#Gaussian Naive Bayes-Yüksek yanlılık
+
+LearningCurveDisplay.from_estimator(
+    GaussianNB(),X,y,cv=cv,n_jobs=4,
+    train_sizes=np.linspace(0.1,1,5),
+    score_name='Accuracy(Doğruluk)',
+    ax=ax[0]
+)
+ax[0].set_title("Gaussian Naive Bayes:Yüksek Yanlılık Örneği")
+
+#SVM(RBF kernel-Daha yüksek varyans modelinde kullanılır)
+
+LearningCurveDisplay.from_estimator(
+    SVC(kernel='rbf',gamma=0.001),X,y,cv=cv,n_jobs=4,
+    train_sizes=np.linspace(0.1,1,5),
+    score_name='Accuracy(Doğruluk)',
+    ax=ax[1]
+)
+ax[1].set_title("SVM(RBF):Yüksek varyans potansiyeli")
+
+plt.ylim(0.7,1.01)
+plt.show()
