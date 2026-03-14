@@ -1,0 +1,34 @@
+# Örnek Düzenlileştirme Uygulama Akışı
+import numpy as np
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.datasets import make_regression
+
+
+# 1. Sentetik veri üretelim (sen kendi X_train, y_train verini koyabilirsin)
+X, y = make_regression(n_samples=200, n_features=10, noise=15, random_state=42) #Deney yapabilmemiz için bize hazır regresyon problemi sunar.200 tane örnek ve 10 tane farklı özellik oluşturur noise=15 diyerekte biraz gürültü ekler ki model gerçek dünyadaki gibi biraz zorlansın.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) #Modeli %80 eğitim %20 test olarak yaırır.
+
+
+# 2. Ridge (L2) Uygulaması
+ridge_model = Ridge(alpha=1.0) # alpha burada lambda'dır #Eğer alpha çok büyükse model katsayıları sıfıra yaklaştırır ve model basitleşir.(Katsayıları küçültür ama asla tam olarak sıfır yapmaz)
+ridge_scores = cross_val_score(ridge_model, X_train, y_train, cv=5)
+print(f"Ridge Ortalama CV Başarısı: {ridge_scores.mean():.4f}")
+
+
+# 3. Lasso (L1) Uygulaması
+lasso_model = Lasso(alpha=0.1) # Lasso gereksiz gördüğü bütün özelliklerin katsayılarını sıfır yapar.Alpha ise 0.1'dir
+lasso_scores = cross_val_score(lasso_model, X_train, y_train, cv=5) #Eğitim verisini 5 parçaya böler ve her seferinde 4 parçayla eğitip 1 parçayla test eder 
+print(f"Lasso Ortalama CV Başarısı: {lasso_scores.mean():.4f}")
+
+
+# 4. Modelleri eğitip test setinde performanslarını karşılaştıralım
+ridge_model.fit(X_train, y_train)
+lasso_model.fit(X_train, y_train)
+ridge_test_score = ridge_model.score(X_test, y_test)
+lasso_test_score = lasso_model.score(X_test, y_test)
+
+
+
+print(f"Ridge Test Skoru: {ridge_test_score:.4f}")
+print(f"Lasso Test Skoru: {lasso_test_score:.4f}")
