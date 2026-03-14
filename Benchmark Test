@@ -1,0 +1,22 @@
+import time
+import numpy as np
+
+
+size = 1000000
+
+A=np.random.rand(size) #bana 0 ile 1 arası rastgele 1 milyon tane sayı üret
+B = np.random.rand(size)
+
+start = time.time()
+C_loop = []
+for i in range(size):
+    C_loop.append(A[i]+B[i])
+loop_time = time.time()-start
+
+start = time.time()
+C_vec = A + B
+vec_time = time.time()-start
+
+print(f"Standart döngü süresi:{loop_time:.4f}")
+print(f"Vektörize işlem süresi:{vec_time:.4f}")
+print(f"Hız farkı: {loop_time/vec_time:.1f} kat hızlı")
