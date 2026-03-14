@@ -1,0 +1,53 @@
+import numpy as np
+import matplotlib.pyplot as plt
+def  f(x):
+    """
+        Minimize edilecek örnek maliyet fonksiyonu: f(x) = x^2 + 4x + 4
+        Bu fonksiyon aslında (x+2)^2 olduğu için minimum noktası x = -2'dir.
+    """
+
+    return x**2 +4*x + 4
+def df(x):
+    """
+        Fonksiyonun türevi (gradyanı): f'(x) = 2x + 4
+        Türev bize o noktadaki eğimi, yani hangi yöne gitmemiz gerektiğini söyler.
+        """
+    return 2*x + 4
+
+def gradient_descent(starting_point,learning_rate,n_iterations,tolerance = 1e-6):
+    """
+        Dereceli azaltma algoritması uygulaması.
+    """
+
+    x = starting_point
+    history = [x]
+    for i in range(n_iterations):
+        grad = df(x)
+        step = learning_rate * grad
+
+
+        if np.abs(step) < tolerance:
+            break
+        x = x - step
+        history.append(x)
+
+        print(f"Iterasyon {i+1}:x={x:.4f},f(x={f(x):.4f})")
+
+    return x,history
+
+start_x = 9.0 #Başlangıç Noktamız
+alpha = 0.1 #Öğrenme Oranı
+iters =  50 #Maksimum kaç adım atılacağı
+
+minimum_x ,x_history = gradient_descent(start_x,alpha,iters) #bizim hedefimiz -2 idi biz %99 oranla yaklaştık buna
+x_range = np.linspace(-10,10,100)
+plt.figure(figsize = (10,6))
+plt.plot(x_range, f(x_range),  label = 'f(x) = x^2 + 4x + 4', color = 'blue')
+
+plt.scatter(x_history, [f(h) for h in x_history], color = 'red',label = 'GD Adımları (Adım Büyüklüğü 0.1)')
+plt.title("Dereceli Azaltma Yakınsama Görselleştirmesi")
+plt.xlabel("x değeri(parametre)")
+plt.ylabel(" Maliyet f(x) (Hata)")
+plt.legend()
+plt.grid(True)
+plt.show()
