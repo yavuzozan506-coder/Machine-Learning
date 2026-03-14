@@ -1,0 +1,76 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+#Çalışma saati(X) ve Sınav Notu(Y)
+x = np.array([1,2,3,4,5,6,7,8,9])
+y = np.array([50,55,65,70,75,80,85,90,95])
+
+def manuel_linear_regression(x,y):
+    #m:örnek sayısı
+
+    m = len(x)
+
+
+    x_mean = np.mean(x)
+    y_mean = np.mean(y)
+
+    pay = 0
+    payda = 0
+
+#formül:pay/payda
+#Beta1(Eğim) = Cov(x,y) / Var(x)
+    for i in range(m):
+        pay += ((x[i]-x_mean) * (y[i]-y_mean))
+        payda += (x[i]-x_mean)**2
+
+    theta_1 = pay/payda
+    theta_0 = y_mean - (theta_1*x_mean)
+
+    return theta_1, theta_0
+
+slope,intercept = manuel_linear_regression(x,y)
+print(f"intercept(theta0):{intercept:.2f}")
+print(f"Slope(theta1):{slope:.2f}")
+
+
+def predict(x_val,t0,t1):
+    return t0 + t1 * x_val
+
+plt.scatter(x,y,color='blue',label='Gerçek Veriler')
+plt.plot(x,predict(x,intercept,slope),color = 'red',label='OLS Doğrusu')
+plt.xlabel('Çalışma Saati')
+plt.ylabel('Sınav Notu')
+plt.legend()
+plt.show()
+
+theta0_vals = np.linspace(intercept-20,intercept+20,100)
+theta1_vals = np.linspace(slope-5,slope+5,100)
+T0,T1 = np.meshgrid(theta0_vals,theta1_vals)
+J_vals = np.zeros(T0.shape)
+
+for i in range(len(theta0_vals)):
+    for j in range(len(theta1_vals)):
+        hyp = theta0_vals[i]+theta1_vals[j] * x
+        J_vals[j,i] = np.mean((hyp-y)**2)/2
+
+
+fig = plt.figure(figsize=(14,10))
+ax = fig.add_subplot(111,projection='3d')
+surf = ax.plot_surface(T0,T1,J_vals,cmap='plasma',edgecolor='none',alpha = 0.9)
+ax.set_xlabel("$\theta_0$ (Intercept)")
+ax.set_ylabel("$\theta_1$ (Slope)")
+ax.set_zlabel('Maliyet J')
+ax.set_title("MSE Maliyet Fonksiyonu Yüzeyi")
+fig.colorbar(surf, shrink=0.5, aspect=5)
+plt.show()
+
+
+plt.figure(figsize=(10,8))
+contours = plt.contour(T0,T1,J_vals,levels=np.logspace(-1,3,20),cmap='viridis')
+plt.clabel(contours,inline=True,fontsize=10)
+plt.plot(intercept,slope,'rx',markersize = 15,label='Global Minimum')
+plt.title('Maliyet Fonksiyonu Kontur Grafiği (Üstten Görünüm)')
+plt.xlabel('$\theta_0$')
+plt.ylabel('$\theta_1$')
+plt.legend()
+plt.show()
