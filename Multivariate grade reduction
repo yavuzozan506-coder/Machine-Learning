@@ -1,0 +1,70 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+class MultivariateRegression:
+    def __init__(self, learning_rate=0.01, iterations=1000):
+        self.alpha = learning_rate
+        self.iters = iterations
+        self.weights = None
+        self.bias = None
+        self.cost_history = []
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+
+        # Ağırlıkları ve bias'ı sıfır ile başlat
+        self.weights = np.zeros(n_features)
+        self.bias = 0
+
+        for i in range(self.iters):
+            # 1. Tahmin yap (Hipotez)
+            y_pred = np.dot(X, self.weights) + self.bias
+
+            # 2. Hatayı hesapla
+            error = y_pred - y
+
+            # 3. Gradyanları hesapla (Vektörize edilmiş)
+            dw = (1 / n_samples) * np.dot(X.T, error)
+            db = (1 / n_samples) * np.sum(error)
+
+            # 4. Parametreleri güncelle
+            self.weights -= self.alpha * dw
+            self.bias -= self.alpha * db
+
+            # 5. Maliyeti kaydet
+            cost = (1 / (2 * n_samples)) * np.sum(error**2)
+            self.cost_history.append(cost)
+
+            # Her 100 adımda bir ekrana yazdır (Döngü içinde olmalı)
+            if i % 100 == 0:
+                print(f"Iterasyon {i}, Maliyet: {cost:.4f}")
+
+    # Predict metodu fit'in dışında, class'ın içinde olmalı!
+    def predict(self, X):
+        return np.dot(X, self.weights) + self.bias
+
+# --- Test ve Görselleştirme ---
+
+# Sentetik çok değişkenli veri seti
+np.random.seed(42) # Sonuçların tutarlı olması için
+X_synth = np.random.rand(100, 3)
+# Gerçek denklem: y = 3*x1 + 2*x2 - 5*x3 + 10
+y_synth = 3 * X_synth[:, 0] + 2 * X_synth[:, 1] - 5 * X_synth[:, 2] + 10 + np.random.normal(0, 0.1, 100)
+
+# Modeli eğit
+my_model = MultivariateRegression(learning_rate=0.1, iterations=1000)
+my_model.fit(X_synth, y_synth)
+
+# Tahmin testi
+sample_test = X_synth[:2]
+predictions = my_model.predict(sample_test)
+print(f"\nÖrnek Tahminler: {predictions}")
+print(f"Eğitilen Ağırlıklar: {my_model.weights}") # [3, 2, -5] değerlerine yakın olmalı
+print(f"Eğitilen Bias: {my_model.bias}")         # 10 değerine yakın olmalı
+
+# Öğrenme eğrisini çizdir
+plt.plot(my_model.cost_history)
+plt.title("Maliyet Fonksiyonunun Azalışı")
+plt.xlabel("İterasyon Sayısı")
+plt.ylabel("MSE Maliyeti")
+plt.show()
