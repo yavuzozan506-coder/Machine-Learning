@@ -1,0 +1,22 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def draw_contours(scale_x=1,scale_y=10,title = 'Ölçeklendirilmemiş'):
+    w1 = np.linspace(-10,10,100) #Izgara(grid) oluşturma
+    w2 = np.linspace(-10,10,100)
+    W1,W2 = np.meshgrid(w1,w2)
+    Z = (scale_x*W1)  + (scale_y*W2) ** 2
+
+    plt.contour(W1,W2,Z,levels = 15,cmap = 'viridis') # levels = 15 farklı yükseklik seviyesidir. cmap = viridis ise düşük değerleri mor mavi yüksekleri sarı gösterir.
+    plt.title(title)
+    plt.xlabel('Ağırlık 1 (w1)')
+    plt.ylabel('Ağırlık 2 (w2)')
+    plt.grid(True,alpha = 0.3)
+
+plt.figure(figsize = (10,10))
+plt.subplot(1,2,1) #1 satır 2 sütunluk bir tablonun 1.grafiği
+draw_contours(1,10,'Ölçeklendirilmemiş(elips)')
+plt.subplot(1,2,2) # 1 satır 2 sütunluk bir tablonun 2.grafiği
+draw_contours(1,1,'Ölçeklendirilmiş(Daire)')
+plt.show()
