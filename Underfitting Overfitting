@@ -1,0 +1,30 @@
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
+from ipywidgets import interact
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+def plot_poly(degree=1):
+    np.random.seed(0)
+    X = np.sort(np.random.rand(20,1)*5,axis = 0) # 0 ile 5 arası rastgele 20 tane değer ve sort ile büyükten küçüğe sıralanması.
+    y = np.cos(1.5*np.pi*X) + np.random.randn(20,1)*0.1 #Cosinus dalgası + biraz gürültü(noise)
+
+    model = make_pipeline(PolynomialFeatures(degree), LinearRegression()) #Bu adım veriyi "büker". Eğer degree=2 ise, sadece $x$ olan verine $x^2$ özelliğini de ekler. Bu sayede doğrusal (lineer) bir model, eğrisel verileri öğrenebilir hale gelir.
+    model.fit(X,y)
+
+    X_test = np.linspace(0,5,100)
+    y_pred = model.predict(X_test)
+
+    plt.figure(figsize=(10,6))
+    plt.scatter(X,y,color = 'darkorange',label = 'Veri noktaları') #Korelasyonu görmek için kullanılır.
+    plt.plot(X_test,y_pred,color='navy',label=f'Polinom derecesi:{degree}')
+    plt.ylim(-2,2) #y2nin sınırlarını belirledik.
+    plt.title(f"polinom derecesi {degree}")
+    plt.legend()
+    plt.show()
+
+interact(plot_poly,degree=(1,15,1))
+
+
+
