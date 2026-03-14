@@ -1,0 +1,28 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+
+data = {'m2':[85,120,50,200,150], 'fiyat':[1200,1850,850,3100,2200]}
+df = pd.DataFrame(data)
+
+correlation = df.corr().iloc[0,1]
+print(f"Korelasyon Katsayısı: {correlation:.4f}")
+
+X = df[['m2']]
+y = df['fiyat']
+model_house = LinearRegression()
+model_house.fit(X,y)
+
+print(f"Metrekare başına fiyat artışı: {model_house.coef_[0]:.4f} Bin TL")
+print(f"Sabit Maliyet(Arsa/Bina Yaşı): {model_house.intercept_:.4f} Bin TL")
+
+yeni_alan = 135
+tahmin = model_house.predict([[yeni_alan]])
+print(f"{yeni_alan} m2 bir ev tahmini için tahmini fiyat {tahmin[0]:.2f} Bin TL")
+
+plt.figure(figsize=(10,6))
+sns.regplot(x='m2', y='fiyat',data=df,line_kws={'color':'red'})
+plt.title('Ev Fiyatı Regresyon Analizi')
+plt.show()
