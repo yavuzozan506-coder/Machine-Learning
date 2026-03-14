@@ -1,0 +1,330 @@
+ücrede toparlamasını ve anlamanızı kolaylaştırmak adına dipnotlar eklettirdim projedeki kodlar bana ait her ne kadar bu hücreyi Gemini düzenlemiş ve aldığım hatalarda yardımcı olmuş olsa da 
+
+
+import tkinter as tk
+from tkinter import messagebox
+import tkinter.simpledialog as simpledialog
+import numpy as np
+import random
+
+# GLOBAL DEĞİŞKENLER (Hepsi bir arada) 
+root = None
+status_label = None
+skor_label = None
+dugmeler = {}
+tahta_cagir = None
+
+bilgisayar = ''
+insan = ''
+mevcut_oyuncu = 'X'
+game_over = False
+zorluk_seviyesi = 'ZOR'
+
+insan_skor = 0
+bilgisayar_skor = 0
+
+#  YARDIMCI FONKSİYONLAR 
+
+def tahta_1(): 
+    return np.full((3, 3), '-')
+
+def kazanma_kontrol(tahta, oyuncu):
+    # Satır ve Sütunlar
+    for i in range(3):
+        if np.all(tahta[i, :] == oyuncu) or np.all(tahta[:, i] == oyuncu):
+            return True
+    # Çaprazlar
+    if (tahta[0, 0] == tahta[1, 1] == tahta[2, 2] == oyuncu) or \
+       (tahta[0, 2] == tahta[1, 1] == tahta[2, 0] == oyuncu):
+        return True
+    return False
+
+def kazanan_koordinatlar(tahta, oyuncu):
+    for r in range(3):
+        if np.all(tahta[r, :] == oyuncu):
+            return [(r, 0), (r, 1), (r, 2)]
+    for c in range(3):
+        if np.all(tahta[:, c] == oyuncu):
+            return [(0, c), (1, c), (2, c)]
+    if tahta[0, 0] == tahta[1, 1] == tahta[2, 2] == oyuncu:
+        return [(0, 0), (1, 1), (2, 2)]
+    if tahta[0, 2] == tahta[1, 1] == tahta[2, 0] == oyuncu:
+        return [(0, 2), (1, 1), (2, 0)]
+    return None
+
+def berabere(tahta):
+    return '-' not in tahta
+
+def degerlendir(tahta):
+    if kazanma_kontrol(tahta, bilgisayar):
+        return 10
+    elif kazanma_kontrol(tahta, insan):
+        return -10
+    return 0
+
+#  MINIMAX ALGORİTMASI (bu sayede yenilmez olacak)
+
+def minimax(tahta, derinlik, oyuncu, alpha, beta):
+    skor = degerlendir(tahta)
+
+    if skor == 10 or skor == -10 or berabere(tahta):
+        return skor - derinlik if skor == 10 else skor + derinlik if skor == -10 else 0
+
+    if oyuncu == bilgisayar: # MAXIMIZER
+        max_skor = -float('inf')
+        for r in range(3):
+            for c in range(3):
+                if tahta[r, c] == '-':
+                    tahta[r, c] = bilgisayar
+                    skor = minimax(tahta, derinlik + 1, insan, alpha, beta)
+                    tahta[r, c] = '-'
+                    max_skor = max(max_skor, skor)
+                    alpha = max(alpha, max_skor)
+                    if beta <= alpha:
+                        break
+        return max_skor
+    else: # MINIMIZER
+        min_skor = float('inf')
+        for r in range(3):
+            for c in range(3):
+                if tahta[r, c] == '-':
+                    tahta[r, c] = insan
+                    skor = minimax(tahta, derinlik + 1, bilgisayar, alpha, beta)
+                    tahta[r, c] = '-'
+                    min_skor = min(min_skor, skor)
+                    beta = min(beta, min_skor)
+                    if beta <= alpha:
+                        break
+        return min_skor
+
+def bilgisayar_hamle(tahta):
+    global zorluk_seviyesi
+    
+    bos_kareler = []
+    for r in range(3):
+        for c in range(3):
+            if tahta[r,c] == '-':
+                bos_kareler.append((r,c))
+    
+    if not bos_kareler: return (-1, -1)
+
+    # ZORLUK SEVİYESİ MANTIĞI
+    sans = random.random()
+    yapilacak_hamle = None
+    
+    if zorluk_seviyesi == 'KOLAY' and sans < 0.7:     
+        yapilacak_hamle = random.choice(bos_kareler)
+    elif zorluk_seviyesi == 'ORTA' and sans < 0.3:    
+        yapilacak_hamle = random.choice(bos_kareler)
+
+    if yapilacak_hamle:
+        return yapilacak_hamle
+
+    # MINIMAX (Hızlı Başlangıç - Merkez Hamlesi)
+    if len(bos_kareler) == 9: return (1, 1)
+
+    en_iyi_skor = -float('inf')
+    en_iyi_hamle = (-1, -1)
+
+    for (r, c) in bos_kareler:
+        tahta[r, c] = bilgisayar
+        mevcut_skor = minimax(tahta, 0, insan, -float('inf'), float('inf'))
+        tahta[r, c] = '-'
+        if mevcut_skor > en_iyi_skor:
+            en_iyi_skor = mevcut_skor
+            en_iyi_hamle = (r, c)
+    return en_iyi_hamle
+
+# --- ARAYÜZ FONKSİYONLARI ---
+
+def cizgi_cek(kombinasyon):
+    for (r, c) in kombinasyon:
+        dugmeler[(r, c)].config(bg="lightgreen")
+
+def dugmeleri_sil():
+    for dugme in dugmeler.values():
+        dugme.config(state=tk.DISABLED)
+
+def skor_guncelle():
+    # Skor label kontrolü
+    if skor_label:
+        skor_label.config(text=f"SKOR TABLOSU\nSen: {insan_skor}  -  Bilgisayar: {bilgisayar_skor}")
+
+def oyun_sonu_kontrol():
+    global root
+    if game_over:
+        cevap = messagebox.askyesno("Oyun Bitti", "Tekrar oynamak ister misiniz?")
+        if cevap:
+            yeniden_oyna()
+        else:
+            root.destroy()
+
+def ai_kazanma(r, c):
+    global mevcut_oyuncu, game_over, bilgisayar_skor
+    
+    tahta_cagir[r, c] = bilgisayar
+    dugme = dugmeler[(r, c)]
+    dugme.config(text=bilgisayar, state=tk.DISABLED, fg='red', font=('Helvetica', 20, 'bold'))
+
+    if kazanma_kontrol(tahta_cagir, bilgisayar):
+        kombinasyon = kazanan_koordinatlar(tahta_cagir, bilgisayar)
+        if kombinasyon: cizgi_cek(kombinasyon)
+        root.update()
+        
+        bilgisayar_skor += 1
+        skor_guncelle()
+
+        messagebox.showinfo("Sonuç", f"Bilgisayar ({bilgisayar}) Kazandı!")
+        game_over = True
+        dugmeleri_sil()
+        oyun_sonu_kontrol()
+        return
+    elif berabere(tahta_cagir):
+        messagebox.showinfo("Sonuç", "Oyun Berabere!")
+        game_over = True
+        dugmeleri_sil()
+        oyun_sonu_kontrol()
+        return
+
+    mevcut_oyuncu = insan
+    status_label.config(text=f"Sıra: {mevcut_oyuncu} (Siz)")
+
+def ai_kontrol():
+    if not game_over:
+        ai_r, ai_c = bilgisayar_hamle(tahta_cagir)
+        if ai_r != -1:
+            ai_kazanma(ai_r, ai_c)
+
+def insan_hamle(r, c):
+    global mevcut_oyuncu, game_over, insan_skor
+    
+    if game_over or tahta_cagir[r, c] != '-' or mevcut_oyuncu != insan:
+        return
+
+    tahta_cagir[r, c] = insan
+    dugme = dugmeler[(r, c)]
+    dugme.config(text=insan, state=tk.DISABLED, disabledforeground='black', font=('Helvetica', 20, 'bold'))
+
+    if kazanma_kontrol(tahta_cagir, insan):
+        kombinasyon = kazanan_koordinatlar(tahta_cagir, insan)
+        if kombinasyon: cizgi_cek(kombinasyon)
+        root.update()
+        
+        insan_skor += 1
+        skor_guncelle()
+
+        messagebox.showinfo("Sonuç", "Tebrikler! Kazandınız!")
+        game_over = True
+        dugmeleri_sil()
+        oyun_sonu_kontrol()
+        return
+    if berabere(tahta_cagir):
+        messagebox.showinfo("Sonuç", "Oyun Berabere!")
+        game_over = True
+        dugmeleri_sil()
+        oyun_sonu_kontrol()
+        return
+
+    mevcut_oyuncu = bilgisayar
+    status_label.config(text=f"Sıra: {mevcut_oyuncu} (Bilgisayar)")
+    root.update()
+    root.after(500, ai_kontrol)
+
+def zorluk_sec():
+    global zorluk_seviyesi, root
+    root.update()
+    secim = simpledialog.askstring("Zorluk Seçimi", 
+                                   "Zorluk seviyesini seçin:\n1 - Kolay\n2 - Orta\n3 - Zor", 
+                                   parent=root)
+    
+    if secim == '1':
+        zorluk_seviyesi = 'KOLAY'
+    elif secim == '2':
+        zorluk_seviyesi = 'ORTA'
+    elif secim == '3':
+        zorluk_seviyesi = 'ZOR'
+    elif secim is None:
+        messagebox.showinfo("Çıkış", "Zorluk seçilmediği için oyun kapatılıyor.")
+        root.destroy()
+        return 
+    else:
+        messagebox.showerror("Hata", "Lütfen sadece 1, 2 veya 3 giriniz!")
+        zorluk_sec()
+
+def isaret_sec():
+    global insan, bilgisayar, mevcut_oyuncu
+    root.update()
+    secim = simpledialog.askstring("İşaret Seçimi", "Lütfen işaretinizi seçin (X veya O):", parent=root)
+    
+    if secim and secim.upper() in ('X', 'O'):
+        insan = secim.upper()
+        bilgisayar = 'O' if insan == 'X' else 'X'
+        status_label.config(text=f"Sıra: X. Sen: {insan}")
+        
+        if bilgisayar == 'X':
+            mevcut_oyuncu = bilgisayar
+            root.after(500, ai_kontrol)
+        else:
+            mevcut_oyuncu = insan
+    elif secim is None:
+        messagebox.showinfo("Bilgi", "Seçim yapılmadı, oyun kapatılıyor.")
+        root.destroy()
+    else:
+        messagebox.showerror("Hata", "Lütfen sadece X veya O giriniz.")
+        isaret_sec()
+
+def yeniden_oyna():
+    global mevcut_oyuncu, tahta_cagir, game_over
+    
+    # Düğmeleri temizle
+    for r in range(3):
+        for c in range(3):
+            dugme = dugmeler[(r, c)]
+            dugme.config(text=' ', state=tk.NORMAL, fg='black', bg='SystemButtonFace')
+
+    # DÜZELTME: Bu satırlar artık döngünün DIŞINDA
+    tahta_cagir = tahta_1()
+    game_over = False
+    mevcut_oyuncu = 'X'
+    
+    # Sorular sadece 1 kere sorulacak
+    root.after(100, zorluk_sec)
+    root.after(200, isaret_sec)
+
+def arayuz():
+    global status_label, skor_label, dugmeler
+    
+    root.title("Tic-Tac-Toe Oyunu")
+    
+    # Pencereyi öne getir
+    root.lift()
+    root.attributes('-topmost', True)
+    root.after_idle(root.attributes, '-topmost', False)
+
+    status_label = tk.Label(root, text="Sıra Oyuncu: X", font=('Helvetica', 14))
+    status_label.grid(row=0, column=0, columnspan=3, pady=5)
+
+    for r in range(3):
+        for c in range(3):
+            btn = tk.Button(root, text=' ', width=5, height=2, font=('Helvetica', 20),
+                            command=lambda row=r, col=c: insan_hamle(row, col))
+            btn.grid(row=r+1, column=c, padx=5, pady=5)
+            dugmeler[(r, c)] = btn
+
+    skor_label = tk.Label(root, text=f"SKOR TABLOSU\nSen: {insan_skor}  -  Bilgisayar: {bilgisayar_skor}", 
+                          font=('Helvetica', 12, 'bold'), fg="blue")
+    skor_label.grid(row=4, column=0, columnspan=3, pady=10)
+
+    root.after(100, zorluk_sec)
+    root.after(200, isaret_sec)
+    root.mainloop()
+
+def oyunu_baslat():
+    global root, tahta_cagir, mevcut_oyuncu
+    root = tk.Tk()
+    tahta_cagir = tahta_1()
+    mevcut_oyuncu = 'X'
+    arayuz()
+
+if __name__ == '__main__':
+    oyunu_baslat()
