@@ -1,0 +1,22 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from IPython.display import HTML
+
+def f(x):
+    return x**2
+
+x_history  = np.linspace(-8,8,20)
+fig,ax = plt.subplots()
+x_vals = np.linspace(-10,10,100)
+ax.plot(x_vals,f(x_vals),'-b',alpha = 0.5)
+point, = ax.plot([x_history[0]],[f(x_history[0])],'ro',label='Mevcut durum')
+
+def animate(i):
+    if i < len(x_history):
+        point.set_data([x_history[i]],[f(x_history[i])])
+    return point,
+anim = animation.FuncAnimation(fig,animate,frames=len(x_history),interval=200,blit=True)
+plt.legend()
+
+HTML(anim.to_jshtml())
