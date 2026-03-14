@@ -1,0 +1,41 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+#Karmaşıklık(x eks.) Polinom derecesi veya modelin derinliği gibi
+
+complexity = np.linspace(1,10,100)
+
+#yanlılık(bias^2):Karmaşıklık arttıkça azalır
+bias_sq = 50* np.exp(-0.5*complexity) + 2
+variance = 0.5 * complexity**2
+
+irreducible_error = np.full_like(complexity,5) #Kusursuz model yoktur.Ve bizde hatayı sabit 5 birim olarak tanımladık.Eğer sadece error = 5 deseydin, Python bunu tek bir sayı (scalar) olarak görürdü. Ama biz grafik çizdirirken x eksenindeki her bir complexity noktasına karşılık gelen bir y değeri (yani bir dizi) istiyoruz.
+
+
+total_error = bias_sq + variance + irreducible_error
+
+
+plt.figure(figsize=(12,7))
+plt.plot(complexity,bias_sq,'b-',label='Yanlılık^2(Bias^2)',lw=2) # b diyerek rengin blue olacağını çzigi çekerek kesikli olacağını belirttik.Line width ise kalınlıktır
+plt.plot(complexity,variance,'r-',label='Varyans(Variance)',lw=2)
+plt.plot(complexity,total_error,'k-',label='Total Error',lw=3)
+plt.axhline(y=5,color='gray',linestyle=':',label='İndirgenemez Hata')
+
+min_error_idx = np.argmin(total_error) #argmin listenin içine bakar, en küçük sayıyı bulur ve o sayının değerini değil,kaçıncı sırada(indeks) olduğunu döndürür.
+plt.axvline(x=complexity[min_error_idx],color='g',linestyle='-',label='Optimal Nokta') #x eksenine yatay çizgi
+
+
+# Bölgelerin işaretlenmesi
+
+plt.fill_between(complexity,0,60,where=(complexity > complexity[min_error_idx]),
+                 color='red',alpha=0.1)
+plt.text(7.5,55,"Overfitting Bölgesi",color='red',fontsize=12)
+
+plt.title("Yanlılık-Varyans Değiş Tokuşu Analizi", fontsize=15)
+plt.xlabel("Model Karmaşıklığı", fontsize=12)
+plt.ylabel("Hata (Hata Miktarı)", fontsize=12)
+plt.legend(loc='upper center',bbox_to_anchor=(0.5,-0.1),ncol=3)
+plt.grid(True,alpha=0.3)
+plt.tight_layout(rect=[0,0.03,1,0.95])
+plt.show()
