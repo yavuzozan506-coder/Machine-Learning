@@ -1,0 +1,14 @@
+import plotly.graph_objects as go
+import numpy as np
+
+w1 = np.linspace(-5,5,50)
+w2 = np.linspace(-5,5,50)
+W1,W2 = np.meshgrid(w1,w2)
+
+Z = W1**2 + W2**2
+
+fig = go.Figure(data=[go.Surface(x=W1,y=W2,z=Z)])
+fig.update_layout(title='Maliyet Fonksiyonu Enerji Yüzeyi',
+                  scene = dict(xaxis_title='Ağırlık 1',yaxis_title='Ağırlık 2 ',zaxis_title = 'Maliyet(Hata)'),
+                  width=700,height=700)
+fig.show()
